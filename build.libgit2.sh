@@ -2,6 +2,15 @@
 
 LIBGIT2SHA=`cat ./nuget.package/libgit2/libgit2_hash.txt`
 SHORTSHA=${LIBGIT2SHA:0:7}
+OS=`uname`
+ARCH=`uname -m`
+PACKAGEPATH="nuget.package/runtimes"
+
+if [[ $OS == "Darwin" ]]; then
+	USEHTTPS="ON"
+else
+	USEHTTPS="OFF"
+fi
 
 rm -rf libgit2/build
 mkdir libgit2/build
@@ -15,16 +24,12 @@ cmake -DCMAKE_BUILD_TYPE:STRING=Release \
       -DENABLE_TRACE=ON \
       -DLIBGIT2_FILENAME=git2-$SHORTSHA \
       -DCMAKE_OSX_ARCHITECTURES="i386;x86_64" \
+      -DUSE_HTTPS=$USEHTTPS \
       -DUSE_BUNDLED_ZLIB=ON \
       ..
 cmake --build .
 
 popd
-
-OS=`uname`
-ARCH=`uname -m`
-
-PACKAGEPATH="nuget.package/runtimes"
 
 if [[ $RID == "" ]]; then
 	if [[ $ARCH == "x86_64" ]]; then
