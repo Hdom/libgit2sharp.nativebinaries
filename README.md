@@ -1,3 +1,28 @@
+# LibGit2Sharp-SSH-standard.NativeBinaries
+
+This is a fork of LibGit2Sharp.NativeBinaries, modified to support SSH on .NET Standard
+
+  
+## Building the Nuget Package
+Preparation: In powershell, run the following:
+```
+.\UpdateLibgit2ToSha.ps1 master
+rm -Recurse .\nuget.package\runtimes\*
+```
+Build Windows binaries: In powershell, run the following:
+`.\build.libgit2.ps1 15`
+(change 15 to your version of Visual Studio. Version 15 corresponds to Visual Studio 2017)
+
+Build Linux binaries (requires Docker for Windows): In git bash, run the following:
+`./dockerbuild-all.sh`
+
+Build the Nuget package (change the 1.0.251 to the desired version number)
+`.\buildpackage.ps1 1.0.251`
+
+Note that on alpine linux the native binaries have a dependency on libcurl
+
+---
+The original readme for this package is included below:
 # LibGit2Sharp.NativeBinaries
 
 **[Libgit2Sharp][lg2s]** is a managed wrapper around **[libgit2][lg2]**, and as

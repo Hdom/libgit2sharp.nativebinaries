@@ -25,6 +25,9 @@ $x64Directory = Join-Path $projectDirectory "nuget.package\runtimes\win-x64\nati
 $hashFile = Join-Path $projectDirectory "nuget.package\libgit2\libgit2_hash.txt"
 $sha = Get-Content $hashFile 
 
+$libssh2Directory = Join-Path $projectDirectory "libssh2"
+$libssh2_embed = $libssh2Directory -replace "\\", "/"
+
 if (![string]::IsNullOrEmpty($libgit2Name)) {
     $binaryFilename = $libgit2Name
 } else {
@@ -101,16 +104,15 @@ function Assert-Consistent-Naming($expected, $path) {
 }
 
 try {
-    Push-Location $libgit2Directory
-
     $cmake = Find-CMake
     $ctest = Join-Path (Split-Path -Parent $cmake) "ctest.exe"
 
+    Push-Location $libgit2Directory
     Write-Output "Building 32-bit..."
     Run-Command -Quiet { & remove-item build -recurse -force }
     Run-Command -Quiet { & mkdir build }
     cd build
-    Run-Command -Quiet -Fatal { & $cmake -G "Visual Studio $vs" -D ENABLE_TRACE=ON -D "BUILD_CLAR=$build_clar" -D "LIBGIT2_FILENAME=$binaryFilename" .. }
+    Run-Command -Quiet -Fatal { & $cmake -G "Visual Studio $vs" -D ENABLE_TRACE=ON -D "BUILD_CLAR=$build_clar" -D "LIBGIT2_FILENAME=$binaryFilename" -D "EMBED_SSH_PATH=$libssh2_embed" -D GIT_SSH_MEMORY_CREDENTIALS=ON .. }
     Run-Command -Quiet -Fatal { & $cmake --build . --config $configuration }
     if ($test.IsPresent) { Run-Command -Quiet -Fatal { & $ctest -V . } }
     cd $configuration
@@ -119,12 +121,13 @@ try {
     Run-Command -Quiet { & rm $x86Directory\* }
     Run-Command -Quiet { & mkdir -fo $x86Directory }
     Run-Command -Quiet -Fatal { & copy -fo * $x86Directory -Exclude *.lib }
+    Pop-Location
 
+    Push-Location $libgit2Directory
     Write-Output "Building 64-bit..."
-    cd ..
-    Run-Command -Quiet { & mkdir build64 }
-    cd build64
-    Run-Command -Quiet -Fatal { & $cmake -G "Visual Studio $vs Win64" -D THREADSAFE=ON -D ENABLE_TRACE=ON -D "BUILD_CLAR=$build_clar" -D "LIBGIT2_FILENAME=$binaryFilename" ../.. }
+    Run-Command -Quiet { & mkdir build/build64 }
+    cd build/build64
+    Run-Command -Quiet -Fatal { & $cmake -G "Visual Studio $vs Win64" -D THREADSAFE=ON -D ENABLE_TRACE=ON -D "BUILD_CLAR=$build_clar" -D "LIBGIT2_FILENAME=$binaryFilename" -D "EMBED_SSH_PATH=$libssh2_embed" -D GIT_SSH_MEMORY_CREDENTIALS=ON ../.. }
     Run-Command -Quiet -Fatal { & $cmake --build . --config $configuration }
     if ($test.IsPresent) { Run-Command -Quiet -Fatal { & $ctest -V . } }
     cd $configuration
@@ -133,6 +136,7 @@ try {
     Run-Command -Quiet { & rm $x64Directory\* }
     Run-Command -Quiet { & mkdir -fo $x64Directory }
     Run-Command -Quiet -Fatal { & copy -fo * $x64Directory -Exclude *.lib }
+    Pop-Location
 
     Write-Output "Done!"
 }
