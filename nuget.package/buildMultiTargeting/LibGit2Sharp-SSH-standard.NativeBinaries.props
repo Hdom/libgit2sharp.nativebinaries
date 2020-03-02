@@ -1,3 +1,0 @@
-<Project>
-  <Import Project="..\build\LibGit2Sharp-SSH-standard.NativeBinaries.props" />
-</Project>

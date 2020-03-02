@@ -61,12 +61,12 @@ function Run-Command([scriptblock]$Command, [switch]$Fatal, [switch]$Quiet) {
         return
     }
 
-    $error = "``$Command`` failed"
+    $error2 = "``$Command`` failed"
     if ($output) {
         Write-Host -ForegroundColor yellow $output
-        $error += ". See output above."
+        $error2 += ". See output above."
     }
-    Throw $error
+    Throw $error2
 }
 
 function Find-CMake {
@@ -127,7 +127,13 @@ try {
     Write-Output "Building 64-bit..."
     Run-Command -Quiet { & mkdir build/build64 }
     cd build/build64
-    Run-Command -Quiet -Fatal { & $cmake -G "Visual Studio $vs Win64" -D THREADSAFE=ON -D ENABLE_TRACE=ON -D "BUILD_CLAR=$build_clar" -D "LIBGIT2_FILENAME=$binaryFilename" -D "EMBED_SSH_PATH=$libssh2_embed" -D GIT_SSH_MEMORY_CREDENTIALS=ON ../.. }
+    if ($vs -eq "16") {
+        Run-Command -Quiet -Fatal { & $cmake -G "Visual Studio $vs" -A "x64" -D THREADSAFE=ON -D ENABLE_TRACE=ON -D "BUILD_CLAR=$build_clar" -D "LIBGIT2_FILENAME=$binaryFilename" -D "EMBED_SSH_PATH=$libssh2_embed" -D GIT_SSH_MEMORY_CREDENTIALS=ON ../.. }
+    }
+    else {
+        Run-Command -Quiet -Fatal { & $cmake -G "Visual Studio $vs Win64" -D THREADSAFE=ON -D ENABLE_TRACE=ON -D "BUILD_CLAR=$build_clar" -D "LIBGIT2_FILENAME=$binaryFilename" -D "EMBED_SSH_PATH=$libssh2_embed" -D GIT_SSH_MEMORY_CREDENTIALS=ON ../.. }
+    }
+    
     Run-Command -Quiet -Fatal { & $cmake --build . --config $configuration }
     if ($test.IsPresent) { Run-Command -Quiet -Fatal { & $ctest -V . } }
     cd $configuration
